@@ -30,7 +30,7 @@ function Settings() {
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto">
+    <div>
       <h1 className="m-0 mb-8 text-[2rem] font-semibold text-gray-900 dark:text-white">
         Settings
       </h1>
@@ -56,7 +56,7 @@ function Settings() {
                 
                 {/* Section Items */}
                 {expandedSections.includes(section.name) && (
-                  <div className={sectionIdx < settingsSections.length - 1 ? 'border-b border-gray-200 dark:border-[#333]' : ''}>
+                  <div className={`px-3 py-2 ${sectionIdx < settingsSections.length - 1 ? 'border-b border-gray-200 dark:border-[#333]' : ''}`}>
                     {section.items.map(item => {
                       const path = `/settings/${section.name.toLowerCase()}/${item.toLowerCase().replace(/\s+/g, '-')}`
                       return (
@@ -64,8 +64,8 @@ function Settings() {
                           key={item}
                           to={path}
                           className={({ isActive }) =>
-                            `block px-6 py-3 text-gray-600 dark:text-gray-400 hover:bg-purple-50 dark:hover:bg-[rgba(102,126,234,0.1)] hover:text-[#667eea] dark:hover:text-white transition-colors no-underline ${
-                              isActive ? 'bg-purple-50 dark:bg-[rgba(102,126,234,0.15)] text-[#667eea] dark:text-white font-medium' : ''
+                            `block px-4 py-2.5 mb-1 text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#2a2a2a] transition-colors no-underline rounded-lg ${
+                              isActive ? 'bg-gray-200/70 dark:bg-[#333] text-gray-900 dark:text-white font-medium' : ''
                             }`
                           }
                         >

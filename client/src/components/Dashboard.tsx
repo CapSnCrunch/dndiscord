@@ -5,6 +5,7 @@ import { useTheme } from '../contexts/ThemeContext'
 import { authService } from '../services/authService'
 import { 
   Earth,
+  Bot,
   Sun,
   Moon,
   Settings,
@@ -100,11 +101,11 @@ function Dashboard({ children }: DashboardProps) {
   }
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-[#1a1a1a] transition-colors">
-      <aside className={`${isSidebarCollapsed ? 'w-[70px]' : 'w-[250px]'} bg-gradient-to-b from-gray-50 to-white dark:from-[#2a2a2a] dark:to-[#1f1f1f] border-r border-gray-200 dark:border-[#333] flex flex-col fixed h-screen left-0 top-0 max-md:w-[70px] transition-all duration-300`}>
+    <div className="flex min-h-screen bg-gray-50 dark:bg-[#0f0f0f] transition-colors">
+      <aside className={`${isSidebarCollapsed ? 'w-[70px]' : 'w-[250px]'} bg-gray-50 dark:bg-[#0f0f0f] border-r border-gray-50 dark:border-[#0f0f0f] flex flex-col fixed h-screen left-0 top-0 max-md:w-[70px] transition-all duration-300`}>
         {!isSidebarCollapsed ? (
-          <div className="p-4 border-b border-gray-200 dark:border-[#333] flex items-center justify-between">
-            <div className="flex items-center">
+          <div className="p-4 border-b border-gray-50 dark:border-[#0f0f0f] flex items-center justify-between">
+            <div className="flex items-center pl-2">
               <span className="text-[2rem]">🎲</span>
             </div>
             
@@ -154,11 +155,11 @@ function Dashboard({ children }: DashboardProps) {
             </div>
           </div>
         ) : (
-          <div className="p-4 border-b border-gray-200 dark:border-[#333] flex items-center justify-center">
+          <div className="p-4 border-b border-gray-50 dark:border-[#0f0f0f] flex items-center">
             <Tooltip text="Expand" position="right">
               <button
                 onClick={() => setIsSidebarCollapsed(false)}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors cursor-pointer border-none bg-transparent text-gray-600 dark:text-[#aaa]"
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors cursor-pointer border-none bg-transparent text-gray-600 dark:text-[#aaa] ml-[2px]"
               >
                 <span className="text-[2rem]">🎲</span>
               </button>
@@ -166,43 +167,73 @@ function Dashboard({ children }: DashboardProps) {
           </div>
         )}
         
-        <nav className="flex flex-col py-4 flex-1">
+        <nav className="flex flex-col py-4 flex-1 px-3 space-y-1">
           {isSidebarCollapsed ? (
-            <Tooltip text="Worlds" position="right">
+            <>
+              <Tooltip text="Worlds" position="right">
+                <NavLink 
+                  to="/worlds" 
+                  className={({ isActive }) => 
+                    `flex items-center justify-center w-full py-3 text-gray-700 dark:text-[#aaa] no-underline transition-all rounded-lg ${
+                      isActive 
+                        ? 'bg-gray-200/70 dark:bg-[#333] text-gray-900 dark:text-white font-medium' 
+                        : 'hover:bg-gray-100 dark:hover:bg-[#2a2a2a]'
+                    }`
+                  }
+                >
+                  <Earth size={22} className="flex-shrink-0" />
+                </NavLink>
+              </Tooltip>
+              <Tooltip text="Bots" position="right">
+                <NavLink 
+                  to="/bots" 
+                  className={({ isActive }) => 
+                    `flex items-center justify-center w-full py-3 text-gray-700 dark:text-[#aaa] no-underline transition-all rounded-lg ${
+                      isActive 
+                        ? 'bg-gray-200/70 dark:bg-[#333] text-gray-900 dark:text-white font-medium' 
+                        : 'hover:bg-gray-100 dark:hover:bg-[#2a2a2a]'
+                    }`
+                  }
+                >
+                  <Bot size={22} className="flex-shrink-0" />
+                </NavLink>
+              </Tooltip>
+            </>
+          ) : (
+            <>
               <NavLink 
                 to="/worlds" 
                 className={({ isActive }) => 
-                  `flex items-center gap-4 px-6 py-4 text-gray-600 dark:text-[#aaa] no-underline transition-all border-l-[3px] border-transparent ${
+                  `flex items-center gap-4 px-4 py-3 text-gray-700 dark:text-[#aaa] no-underline transition-all rounded-lg leading-none ${
                     isActive 
-                      ? 'bg-purple-50 dark:bg-[rgba(102,126,234,0.15)] border-l-[#667eea] text-[#667eea] dark:text-white' 
-                      : 'hover:bg-purple-50 dark:hover:bg-[rgba(102,126,234,0.1)] hover:text-[#667eea] dark:hover:text-white'
+                      ? 'bg-gray-200/70 dark:bg-[#333] text-gray-900 dark:text-white font-medium' 
+                      : 'hover:bg-gray-100 dark:hover:bg-[#2a2a2a]'
                   }`
                 }
               >
-                <Earth size={22} />
-                <span className="hidden max-md:hidden">Worlds</span>
+                <Earth size={22} className="flex-shrink-0" />
+                <span className="max-md:hidden leading-none">Worlds</span>
               </NavLink>
-            </Tooltip>
-          ) : (
-            <NavLink 
-              to="/worlds" 
-              className={({ isActive }) => 
-                `flex items-center gap-4 px-6 py-4 text-gray-600 dark:text-[#aaa] no-underline transition-all border-l-[3px] border-transparent ${
-                  isActive 
-                    ? 'bg-purple-50 dark:bg-[rgba(102,126,234,0.15)] border-l-[#667eea] text-[#667eea] dark:text-white' 
-                    : 'hover:bg-purple-50 dark:hover:bg-[rgba(102,126,234,0.1)] hover:text-[#667eea] dark:hover:text-white'
-                }`
-              }
-            >
-              <Earth size={22} />
-              <span className="max-md:hidden">Worlds</span>
-            </NavLink>
+              <NavLink 
+                to="/bots" 
+                className={({ isActive }) => 
+                  `flex items-center gap-4 px-4 py-3 text-gray-700 dark:text-[#aaa] no-underline transition-all rounded-lg leading-none ${
+                    isActive 
+                      ? 'bg-gray-200/70 dark:bg-[#333] text-gray-900 dark:text-white font-medium' 
+                      : 'hover:bg-gray-100 dark:hover:bg-[#2a2a2a]'
+                  }`
+                }
+              >
+                <Bot size={22} className="flex-shrink-0" />
+                <span className="max-md:hidden leading-none">Bots</span>
+              </NavLink>
+            </>
           )}
         </nav>
 
         {/* User Profile Section with Dropdown */}
         {user && (
-          <div className={`relative p-4 border-t border-gray-200 dark:border-[#333] mt-auto max-md:hidden ${isSidebarCollapsed ? 'flex justify-center' : ''}`} ref={dropdownRef}>
+          <div className={`relative p-4 border-t border-gray-50 dark:border-[#0f0f0f] mt-auto max-md:hidden ${isSidebarCollapsed ? 'flex justify-center' : ''}`} ref={dropdownRef}>
             <button
               onClick={() => isSidebarCollapsed ? setIsSidebarCollapsed(false) : setIsDropdownOpen(!isDropdownOpen)}
               className={`${isSidebarCollapsed ? 'w-auto' : 'w-full'} flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors cursor-pointer border-none bg-transparent`}
@@ -227,14 +258,14 @@ function Dashboard({ children }: DashboardProps) {
               <div className="absolute bottom-full left-4 right-4 mb-2 bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#444] rounded-lg shadow-lg overflow-hidden z-50">
                 <button
                   onClick={handleToggleTheme}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-colors cursor-pointer border-none bg-transparent text-left"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-colors cursor-pointer border-none bg-transparent text-left leading-none"
                 >
                   {theme === 'dark' ? (
-                    <Sun size={20} />
+                    <Sun size={20} className="flex-shrink-0" />
                   ) : (
-                    <Moon size={20} />
+                    <Moon size={20} className="flex-shrink-0" />
                   )}
-                  <span className="text-sm font-medium">
+                  <span className="text-sm font-medium leading-none">
                     {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
                   </span>
                 </button>
@@ -244,10 +275,10 @@ function Dashboard({ children }: DashboardProps) {
                     navigate('/settings')
                     setIsDropdownOpen(false)
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-colors cursor-pointer border-none bg-transparent text-left"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-colors cursor-pointer border-none bg-transparent text-left leading-none"
                 >
-                  <Settings size={20} />
-                  <span className="text-sm font-medium">Settings</span>
+                  <Settings size={20} className="flex-shrink-0" />
+                  <span className="text-sm font-medium leading-none">Settings</span>
                 </button>
                 
                 <div className="border-t border-gray-200 dark:border-[#444]"></div>
@@ -255,10 +286,10 @@ function Dashboard({ children }: DashboardProps) {
                 <button
                   onClick={handleSignOut}
                   disabled={isSigningOut}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors cursor-pointer border-none bg-transparent text-left disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors cursor-pointer border-none bg-transparent text-left disabled:opacity-60 disabled:cursor-not-allowed leading-none"
                 >
-                  <LogOut size={20} />
-                  <span className="text-sm font-medium">
+                  <LogOut size={20} className="flex-shrink-0" />
+                  <span className="text-sm font-medium leading-none">
                     {isSigningOut ? 'Signing out...' : 'Sign Out'}
                   </span>
                 </button>
@@ -268,7 +299,7 @@ function Dashboard({ children }: DashboardProps) {
         )}
       </aside>
       
-      <main className={`flex-1 ${isSidebarCollapsed ? 'ml-[70px]' : 'ml-[250px]'} bg-gray-50 dark:bg-[#0f0f0f] min-h-screen max-md:ml-[70px] transition-all duration-300 p-8`}>
+      <main className={`flex-1 ${isSidebarCollapsed ? 'ml-[70px]' : 'ml-[250px]'} bg-gray-50 dark:bg-[#0f0f0f] min-h-screen max-md:ml-[70px] transition-all duration-300 p-6`}>
         {children}
       </main>
     </div>

@@ -5,6 +5,11 @@ import SignUp from './pages/SignUp'
 import Dashboard from './components/Dashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 import Worlds from './pages/Worlds'
+import WorldDetail from './pages/WorldDetail'
+import NPCs from './pages/NPCs'
+import NPCDetail from './pages/NPCDetail'
+import Bots from './pages/Bots'
+import BotDetail from './pages/BotDetail'
 import Settings from './pages/Settings'
 import Profile from './pages/settings/Profile'
 import Display from './pages/settings/Display'
@@ -30,6 +35,41 @@ function App() {
           <ProtectedRoute>
             <Dashboard>
               <Worlds />
+            </Dashboard>
+          </ProtectedRoute>
+        } />
+        <Route path="/worlds/:worldId" element={
+          <ProtectedRoute>
+            <Dashboard>
+              <WorldDetail />
+            </Dashboard>
+          </ProtectedRoute>
+        } />
+        <Route path="/worlds/:worldId/npcs" element={
+          <ProtectedRoute>
+            <Dashboard>
+              <NPCs />
+            </Dashboard>
+          </ProtectedRoute>
+        } />
+        <Route path="/worlds/:worldId/npcs/:npcId" element={
+          <ProtectedRoute>
+            <Dashboard>
+              <NPCDetail />
+            </Dashboard>
+          </ProtectedRoute>
+        } />
+        <Route path="/bots" element={
+          <ProtectedRoute>
+            <Dashboard>
+              <Bots />
+            </Dashboard>
+          </ProtectedRoute>
+        } />
+        <Route path="/bots/:botId" element={
+          <ProtectedRoute>
+            <Dashboard>
+              <BotDetail />
             </Dashboard>
           </ProtectedRoute>
         } />
