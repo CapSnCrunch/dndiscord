@@ -13,8 +13,8 @@ const router = Router();
 // Initialize services
 const worldService = new WorldService();
 const npcService = new NPCService();
-const botService = new BotService();
 const imageService = new ImageService();
+const botService = new BotService(npcService, imageService);
 
 // Configure multer for memory storage
 const upload = multer({

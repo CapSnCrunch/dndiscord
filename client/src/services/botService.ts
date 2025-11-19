@@ -4,8 +4,8 @@ export interface Bot {
   id: string;
   name: string;
   description?: string;
-  discordBotToken: string;
-  discordUserId?: string;
+  discordServerId: string;
+  discordChannelId?: string;
   worldId: string;
   npcId: string;
   userId: string;
@@ -36,18 +36,18 @@ export const botService = {
   /**
    * Create a new bot
    * @param botData - The bot data
-   * @returns The ID of the created bot
+   * @returns The ID and invite URL of the created bot
    */
   async createBot(botData: {
     name: string;
     description?: string;
-    discordBotToken: string;
-    discordUserId?: string;
+    discordServerId: string;
+    discordChannelId?: string;
     worldId: string;
     npcId: string;
-  }): Promise<string> {
-    const response = await api.post<{ id: string }>('/bots', botData);
-    return response.data.id;
+  }): Promise<{ id: string; inviteUrl?: string }> {
+    const response = await api.post<{ id: string; inviteUrl?: string }>('/bots', botData);
+    return response.data;
   },
 
   /**
@@ -61,8 +61,8 @@ export const botService = {
     botData: {
       name?: string;
       description?: string;
-      discordBotToken?: string;
-      discordUserId?: string;
+      discordServerId?: string;
+      discordChannelId?: string;
       worldId?: string;
       npcId?: string;
     }

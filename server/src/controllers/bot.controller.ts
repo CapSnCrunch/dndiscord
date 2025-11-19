@@ -1,9 +1,9 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import type { AuthenticatedRequest } from '../middleware/auth.middleware.ts';
 import { authenticateUser } from '../middleware/auth.middleware.ts';
 import { asyncHandler } from '../middleware/global-error.middleware.ts';
-import type { Bot, BotService, CreateBotData, UpdateBotData } from '../services/bot.service.ts';
+import type { Bot, BotService, CreateBotData, UpdateBotData, CreateBotResult } from '../services/bot.service.ts';
 import {
   AuthenticationException,
   ValidationException,
@@ -14,8 +14,8 @@ import {
 export interface CreateBotRequest {
   name: string;
   description?: string;
-  discordBotToken: string;
-  discordUserId?: string;
+  discordServerId: string;
+  discordChannelId?: string;
   worldId: string;
   npcId: string;
 }
@@ -23,8 +23,8 @@ export interface CreateBotRequest {
 export interface UpdateBotRequest {
   name?: string;
   description?: string;
-  discordBotToken?: string;
-  discordUserId?: string;
+  discordServerId?: string;
+  discordChannelId?: string;
   worldId?: string;
   npcId?: string;
 }
@@ -45,12 +45,12 @@ export class BotController {
     router.post(
       '/',
       authenticateUser(),
-      asyncHandler(async (req: AuthenticatedRequest<CreateBotRequest>, res) => {
+      asyncHandler(async (req: AuthenticatedRequest<CreateBotRequest>, res: Response) => {
         if (!req.body.name || !req.body.name.trim()) {
           throw new ValidationException('Bot name is required');
         }
-        if (!req.body.discordBotToken || !req.body.discordBotToken.trim()) {
-          throw new ValidationException('Discord bot token is required');
+        if (!req.body.discordServerId || !req.body.discordServerId.trim()) {
+          throw new ValidationException('Discord server ID is required');
         }
         if (!req.body.worldId) {
           throw new ValidationException('World ID is required');
@@ -59,17 +59,17 @@ export class BotController {
           throw new ValidationException('NPC ID is required');
         }
 
-        const botId = await this.botService.createBot({
+        const result: CreateBotResult = await this.botService.createBot({
           name: req.body.name.trim(),
           description: req.body.description,
-          discordBotToken: req.body.discordBotToken.trim(),
-          discordUserId: req.body.discordUserId,
+          discordServerId: req.body.discordServerId.trim(),
+          discordChannelId: req.body.discordChannelId?.trim(),
           worldId: req.body.worldId,
           npcId: req.body.npcId,
           userId: req.userId!,
         });
 
-        res.status(StatusCodes.CREATED).json({ id: botId });
+        res.status(StatusCodes.CREATED).json({ id: result.id, inviteUrl: result.inviteUrl });
       })
     );
 
@@ -77,7 +77,7 @@ export class BotController {
     router.get(
       '/',
       authenticateUser(),
-      asyncHandler(async (req: AuthenticatedRequest, res) => {
+      asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
         const bots = await this.botService.getBots(req.userId!);
         res.json(bots);
       })
@@ -87,7 +87,7 @@ export class BotController {
     router.get(
       '/:botId',
       authenticateUser(),
-      asyncHandler(async (req: AuthenticatedRequest, res) => {
+      asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
         const bot = await this.validateBotOwnership(req.params.botId, req.userId!);
         res.json(bot);
       })
@@ -97,20 +97,31 @@ export class BotController {
     router.patch(
       '/:botId',
       authenticateUser(),
-      asyncHandler(async (req: AuthenticatedRequest<UpdateBotRequest>, res) => {
+      asyncHandler(async (req: AuthenticatedRequest<UpdateBotRequest>, res: Response) => {
         await this.validateBotOwnership(req.params.botId, req.userId!);
 
         const updateData: UpdateBotData = {
           ...(req.body.name !== undefined && { name: req.body.name }),
           ...(req.body.description !== undefined && { description: req.body.description }),
-          ...(req.body.discordBotToken !== undefined && { discordBotToken: req.body.discordBotToken }),
-          ...(req.body.discordUserId !== undefined && { discordUserId: req.body.discordUserId }),
+          ...(req.body.discordServerId !== undefined && { discordServerId: req.body.discordServerId }),
+          ...(req.body.discordChannelId !== undefined && { discordChannelId: req.body.discordChannelId }),
           ...(req.body.worldId !== undefined && { worldId: req.body.worldId }),
           ...(req.body.npcId !== undefined && { npcId: req.body.npcId }),
         };
 
         const updatedBot = await this.botService.updateBot(req.params.botId, updateData);
         res.json(updatedBot);
+      })
+    );
+
+    // Delete a bot
+    router.delete(
+      '/:botId',
+      authenticateUser(),
+      asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+        await this.validateBotOwnership(req.params.botId, req.userId!);
+        await this.botService.deleteBot(req.params.botId);
+        res.status(StatusCodes.NO_CONTENT).send();
       })
     );
   }
