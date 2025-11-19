@@ -47,6 +47,10 @@ async function initializeDiscordBot() {
     const imageService = new ImageService();
     const botService = new BotService(npcService, imageService);
     discordBotService = new DiscordBotService(botService);
+    
+    // Connect the services so botService can access discordBotService
+    botService.setDiscordBotService(discordBotService);
+    
     await discordBotService.start(discordBotToken, openaiApiKey);
     logger.info('Discord bot initialized successfully');
   } catch (error) {

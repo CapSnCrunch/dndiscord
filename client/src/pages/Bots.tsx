@@ -1,25 +1,23 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { botService, type Bot } from '../services/botService'
 import { worldService, type World } from '../services/worldService'
-import { npcService, type NPC } from '../services/npcService'
 import PageHeader from '../components/PageHeader'
 import { Bot as BotIcon, X, ExternalLink } from 'lucide-react'
 
 function Bots() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [bots, setBots] = useState<Bot[]>([])
   const [worlds, setWorlds] = useState<World[]>([])
-  const [npcs, setNpcs] = useState<NPC[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { user } = useAuth()
   
   // Form state
   const [selectedWorldId, setSelectedWorldId] = useState<string>('')
-  const [selectedNpcId, setSelectedNpcId] = useState<string>('')
   const [discordServerId, setDiscordServerId] = useState<string>('')
   const [discordChannelId, setDiscordChannelId] = useState<string>('')
   const [botName, setBotName] = useState<string>('')
@@ -57,25 +55,20 @@ function Bots() {
     }
   }
 
-  const loadNPCs = async (worldId: string) => {
-    try {
-      const fetchedNpcs = await npcService.getNPCs(worldId)
-      setNpcs(fetchedNpcs)
-    } catch (err) {
-      console.error('Error loading NPCs:', err)
-      setNpcs([])
-    }
-  }
-
+  // Check for worldId in URL params and auto-open modal
   useEffect(() => {
-    if (selectedWorldId) {
-      loadNPCs(selectedWorldId)
-      setSelectedNpcId('') // Reset NPC selection when world changes
-    } else {
-      setNpcs([])
-      setSelectedNpcId('')
+    const worldId = searchParams.get('worldId')
+    if (worldId && worlds.length > 0) {
+      // Verify the worldId exists in the user's worlds
+      const worldExists = worlds.find(w => w.id === worldId)
+      if (worldExists) {
+        setSelectedWorldId(worldId)
+        setIsModalOpen(true)
+        // Clear the query param after using it
+        setSearchParams({})
+      }
     }
-  }, [selectedWorldId])
+  }, [worlds, searchParams, setSearchParams])
 
   const handleCreateNewClick = () => {
     setIsModalOpen(true)
@@ -84,7 +77,6 @@ function Bots() {
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setSelectedWorldId('')
-    setSelectedNpcId('')
     setDiscordServerId('')
     setDiscordChannelId('')
     setBotName('')
@@ -92,7 +84,7 @@ function Bots() {
   }
 
   const handleCreateBot = async () => {
-    if (!selectedWorldId || !selectedNpcId || !discordServerId.trim()) {
+    if (!selectedWorldId || !discordServerId.trim() || !botName.trim()) {
       setError('Please fill in all required fields')
       return
     }
@@ -101,15 +93,11 @@ function Bots() {
     setError(null)
 
     try {
-      const selectedNPC = npcs.find(n => n.id === selectedNpcId)
-      const botNameToUse = botName.trim() || selectedNPC?.name || 'Discord Bot'
-      
       const result = await botService.createBot({
-        name: botNameToUse,
+        name: botName.trim(),
         discordServerId: discordServerId.trim(),
         discordChannelId: discordChannelId.trim() || undefined,
         worldId: selectedWorldId,
-        npcId: selectedNpcId,
       })
 
       if (result.inviteUrl) {
@@ -156,17 +144,17 @@ function Bots() {
       />
       
       {isLoading ? (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-6 max-md:grid-cols-1">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4 max-md:grid-cols-1">
           {[1, 2, 3].map((i) => (
             <div
               key={i}
               className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm animate-pulse overflow-hidden"
             >
-              <div className="h-16 bg-gray-200 dark:bg-[#444]"></div>
+              <div className="h-16 bg-gray-200 dark:bg-stone-700"></div>
               <div className="p-4">
-                <div className="h-6 bg-gray-200 dark:bg-[#444] rounded mb-4"></div>
-                <div className="h-4 bg-gray-200 dark:bg-[#444] rounded mb-2"></div>
-                <div className="h-4 bg-gray-200 dark:bg-[#444] rounded w-3/4"></div>
+                <div className="h-6 bg-gray-200 dark:bg-stone-700 rounded mb-4"></div>
+                <div className="h-4 bg-gray-200 dark:bg-stone-700 rounded mb-2"></div>
+                <div className="h-4 bg-gray-200 dark:bg-stone-700 rounded w-3/4"></div>
               </div>
             </div>
           ))}
@@ -182,7 +170,7 @@ function Bots() {
           </button>
         </div>
       ) : bots.length === 0 ? (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-6 max-md:grid-cols-1">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4 max-md:grid-cols-1">
           <div className="col-span-full text-center py-12">
             <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-[#667eea] to-[#764ba2] flex items-center justify-center">
               <BotIcon size={40} className="text-white" />
@@ -191,7 +179,7 @@ function Bots() {
               No bots yet
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Create your first Discord bot to bring your worlds to life!
+              Create a Discord bot to enable conversations with all NPCs in your worlds!
             </p>
             <button
               onClick={handleCreateNewClick}
@@ -205,11 +193,11 @@ function Bots() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-6 max-md:grid-cols-1">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4 max-md:grid-cols-1">
           {bots.map((bot) => (
             <div
               key={bot.id}
-              className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors cursor-pointer group overflow-hidden"
+              className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-stone-800 transition-colors cursor-pointer group overflow-hidden"
               onClick={() => navigate(`/bots/${bot.id}`)}
             >
               {/* Gradient Banner */}
@@ -253,7 +241,7 @@ function Bots() {
           onClick={handleCloseModal}
         >
           <div 
-            className="bg-white dark:bg-[#2a2a2a] rounded-xl p-8 max-w-lg w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto"
+            className="bg-white dark:bg-stone-800 rounded-xl p-8 max-w-lg w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
@@ -302,6 +290,12 @@ function Bots() {
                   </div>
                 )}
 
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <p className="text-blue-800 dark:text-blue-200 text-sm">
+                    This bot will enable conversations with <strong>all NPCs</strong> in the selected world. Users can mention NPC names in their messages to talk to specific characters.
+                  </p>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     World <span className="text-red-500">*</span>
@@ -309,7 +303,7 @@ function Bots() {
                   <select
                     value={selectedWorldId}
                     onChange={(e) => setSelectedWorldId(e.target.value)}
-                    className="w-full px-4 py-2 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-[#444] rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-[#667eea] focus:border-transparent"
+                    className="w-full pl-4 pr-10 py-2 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-stone-700 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-[#667eea] focus:border-transparent appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3E%3Cpath stroke=%27%236b7280%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27m6 8 4 4 4-4%27/%3E%3C/svg%3E')] bg-[length:1.5em_1.5em] bg-[right_0.5rem_center] bg-no-repeat"
                   >
                     <option value="">Select a world...</option>
                     {worlds.map((world) => (
@@ -318,46 +312,24 @@ function Bots() {
                       </option>
                     ))}
                   </select>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    The bot will have access to all NPCs in this world
+                  </p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    NPC <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={selectedNpcId}
-                    onChange={(e) => setSelectedNpcId(e.target.value)}
-                    disabled={!selectedWorldId || npcs.length === 0}
-                    className="w-full px-4 py-2 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-[#444] rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-[#667eea] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <option value="">
-                      {!selectedWorldId 
-                        ? 'Select a world first...' 
-                        : npcs.length === 0 
-                        ? 'No NPCs in this world' 
-                        : 'Select an NPC...'}
-                    </option>
-                    {npcs.map((npc) => (
-                      <option key={npc.id} value={npc.id}>
-                        {npc.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Bot Name
+                    Bot Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={botName}
                     onChange={(e) => setBotName(e.target.value)}
-                    placeholder={selectedNpcId ? npcs.find(n => n.id === selectedNpcId)?.name || 'Bot name' : 'Bot name'}
-                    className="w-full px-4 py-2 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-[#444] rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-[#667eea] focus:border-transparent"
+                    placeholder="Enter bot name"
+                    className="w-full px-4 py-2 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-stone-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-[#667eea] focus:border-transparent"
                   />
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Leave empty to use the NPC's name
+                    A descriptive name for this bot (e.g., "Tavern NPCs", "World of Eldoria")
                   </p>
                 </div>
 
@@ -370,7 +342,7 @@ function Bots() {
                     value={discordServerId}
                     onChange={(e) => setDiscordServerId(e.target.value)}
                     placeholder="Enter your Discord server ID"
-                    className="w-full px-4 py-2 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-[#444] rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-[#667eea] focus:border-transparent"
+                    className="w-full px-4 py-2 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-stone-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-[#667eea] focus:border-transparent"
                   />
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     Right-click your Discord server → Server Settings → Widget → Server ID (enable Developer Mode first)
@@ -385,11 +357,11 @@ function Bots() {
                     type="text"
                     value={discordChannelId}
                     onChange={(e) => setDiscordChannelId(e.target.value)}
-                    placeholder="Enter Discord channel ID (leave empty for all channels)"
-                    className="w-full px-4 py-2 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-[#444] rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-[#667eea] focus:border-transparent"
+                    placeholder="Enter Discord channel ID (leave empty for server-wide)"
+                    className="w-full px-4 py-2 bg-white dark:bg-[#1a1a1a] border border-gray-300 dark:border-stone-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-[#667eea] focus:border-transparent"
                   />
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Right-click a channel → Copy ID (requires Developer Mode). Leave empty to work in all channels.
+                    Right-click a channel → Copy ID (requires Developer Mode). Leave empty for server-wide bot. Note: Only one bot per server/channel is allowed.
                   </p>
                 </div>
 
@@ -397,13 +369,13 @@ function Bots() {
                   <button
                     onClick={handleCloseModal}
                     disabled={isCreating}
-                    className="flex-1 px-6 py-3 bg-gray-100 dark:bg-[#333] text-gray-700 dark:text-gray-300 rounded-lg font-semibold hover:bg-gray-200 dark:hover:bg-[#444] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-6 py-3 bg-gray-100 dark:bg-stone-700 text-gray-700 dark:text-gray-300 rounded-lg font-semibold hover:bg-gray-200 dark:hover:bg-[#444] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleCreateBot}
-                    disabled={isCreating || !selectedWorldId || !selectedNpcId || !discordServerId.trim()}
+                    disabled={isCreating || !selectedWorldId || !botName.trim() || !discordServerId.trim()}
                     className="flex-1 px-6 py-3 bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(102,126,234,0.4)] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >
                     {isCreating ? 'Creating...' : 'Create Bot'}

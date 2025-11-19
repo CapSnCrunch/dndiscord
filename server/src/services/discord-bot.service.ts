@@ -10,9 +10,9 @@ export class DiscordBotService {
   private botService: BotService;
   private openai: OpenAI | null = null;
   private isInitialized = false;
-  // Cache to track the last bot each user interacted with per channel
-  // Key: `${userId}:${channelId}`, Value: botId
-  private userLastBotCache: Map<string, string> = new Map();
+  // Cache to track the last NPC each user interacted with per channel
+  // Key: `${userId}:${channelId}`, Value: npcId
+  private userLastNPCCache: Map<string, string> = new Map();
 
   constructor(botService: BotService) {
     this.botService = botService;
@@ -91,6 +91,115 @@ export class DiscordBotService {
   }
 
   /**
+   * Fetches recent webhook messages from Discord for a bot
+   * @param bot - The bot configuration
+   * @param limit - Maximum number of messages to retrieve
+   * @returns Array of webhook messages with NPC information
+   */
+  async fetchRecentWebhookMessages(bot: any, limit: number = 10): Promise<Array<{
+    content: string;
+    npcId: string;
+    npcName: string;
+    channelId: string;
+    createdAt: Date;
+  }>> {
+    if (!this.client || !this.isInitialized) {
+      logger.warn('Discord client not initialized, cannot fetch messages');
+      return [];
+    }
+
+    try {
+      const messages: Array<{
+        content: string;
+        npcName: string;
+        channelId: string;
+        createdAt: Date;
+      }> = [];
+
+      // Get the guild (server)
+      const guild = await this.client.guilds.fetch(bot.discordServerId);
+      if (!guild) {
+        logger.warn(`Guild ${bot.discordServerId} not found`);
+        return [];
+      }
+
+      // Determine which channels to check
+      const channelsToCheck: string[] = [];
+      if (bot.discordChannelId) {
+        // Check only the specific channel
+        channelsToCheck.push(bot.discordChannelId);
+      } else {
+        // Check all text channels in the guild
+        const channels = await guild.channels.fetch();
+        channels.forEach((channel) => {
+          if (channel?.isTextBased()) {
+            channelsToCheck.push(channel.id);
+          }
+        });
+      }
+
+      // Fetch messages from each channel
+      for (const channelId of channelsToCheck) {
+        try {
+          const channel = await guild.channels.fetch(channelId);
+          if (!channel?.isTextBased()) continue;
+
+          const fetchedMessages = await channel.messages.fetch({ limit: 50 });
+          
+          // Filter for webhook messages
+          fetchedMessages.forEach((msg) => {
+            if (msg.webhookId && msg.author.username) {
+              messages.push({
+                content: msg.content,
+                npcName: msg.author.username,
+                channelId: msg.channelId,
+                createdAt: msg.createdAt,
+              });
+            }
+          });
+        } catch (error) {
+          logger.error({ err: error, channelId }, 'Error fetching messages from channel');
+        }
+      }
+
+      // Sort by creation date (newest first) and limit
+      messages.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      const limitedMessages = messages.slice(0, limit);
+
+      // Match messages with NPCs from the world
+      const npcService = new NPCService();
+      const npcs = await npcService.getNPCs(bot.worldId);
+      
+      // Create a map of NPC names to IDs (case-insensitive)
+      const npcNameToId = new Map<string, string>();
+      npcs.forEach(npc => {
+        npcNameToId.set(npc.name.toLowerCase(), npc.id);
+      });
+
+      // Map messages to include NPC IDs
+      const messagesWithNPCIds = limitedMessages
+        .map((msg) => {
+          const npcId = npcNameToId.get(msg.npcName.toLowerCase());
+          if (!npcId) return null;
+
+          return {
+            content: msg.content,
+            npcId,
+            npcName: msg.npcName,
+            channelId: msg.channelId,
+            createdAt: msg.createdAt,
+          };
+        })
+        .filter((msg): msg is NonNullable<typeof msg> => msg !== null);
+
+      return messagesWithNPCIds;
+    } catch (error) {
+      logger.error({ err: error, botId: bot.id }, 'Error fetching recent webhook messages');
+      return [];
+    }
+  }
+
+  /**
    * Handles incoming messages
    */
   private async handleMessage(message: Message): Promise<void> {
@@ -135,19 +244,27 @@ export class DiscordBotService {
         return;
       }
 
-      // Find the best matching bot (checks NPC name first, then user's last bot cache)
-      const bot = await this.selectBotForUser(bots, messageContent, message.author.id, channelId);
-      if (!bot) {
-        logger.debug(`Could not determine which bot to use for server ${serverId}, channel ${channelId}`);
+      // Since bots are now one-to-one with worlds and one per server/channel, there should only be one bot
+      const bot = bots[0];
+
+      // Find the NPC mentioned in the message, or use the user's last interacted NPC
+      const npc = await this.selectNPCForUser(bot, messageContent, message.author.id, channelId);
+      if (!npc) {
+        logger.debug(`Could not determine which NPC to use for bot ${bot.id}`);
+        // Could optionally send a message asking which NPC they want to talk to
         return;
       }
 
+      // Update cache with the selected NPC
+      const cacheKey = `${message.author.id}:${channelId}`;
+      this.userLastNPCCache.set(cacheKey, npc.id);
+
       // Generate response using OpenAI (will fetch message history from Discord)
-      const response = await this.generateNPCResponse(bot, messageContent, message.author.id, message.channel);
+      const response = await this.generateNPCResponse(bot, npc, messageContent, message.author.id, message.channel);
 
       if (response) {
         // Send response via webhook
-        await this.botService.sendNPCResponse(bot.id, channelId, response);
+        await this.botService.sendNPCResponse(bot.id, npc.id, channelId, response);
       }
     } catch (error) {
       logger.error({ err: error }, 'Error handling message');
@@ -155,76 +272,82 @@ export class DiscordBotService {
   }
 
   /**
-   * Selects the best bot for a user's message
-   * Priority: 1) NPC name in message, 2) User's last mentioned bot (from cache), 3) First available bot
-   * @param bots - Array of available bots
+   * Selects the best NPC for a user's message
+   * Priority: 1) NPC name in message, 2) User's last mentioned NPC (from cache), 3) First available NPC
+   * @param bot - The bot configuration
    * @param messageContent - The message content
    * @param userId - The Discord user ID
    * @param channelId - The Discord channel ID
-   * @returns The selected bot or null
+   * @returns The selected NPC or null
    */
-  private async selectBotForUser(
-    bots: any[],
+  private async selectNPCForUser(
+    bot: any,
     messageContent: string,
     userId: string,
     channelId: string
   ): Promise<any | null> {
-    if (bots.length === 0) {
-      return null;
-    }
-
     // First, try to find by NPC name in message
-    const nameMatchResult = await this.botService.findBotByNPCName(bots, messageContent);
-    if (nameMatchResult.bot && nameMatchResult.matchedByName) {
-      // Update cache with the name-matched bot
-      const cacheKey = `${userId}:${channelId}`;
-      this.userLastBotCache.set(cacheKey, nameMatchResult.bot.id);
-      logger.debug(`Selected bot ${nameMatchResult.bot.id} by NPC name for user ${userId} in channel ${channelId}`);
-      return nameMatchResult.bot;
+    const npcByName = await this.botService.findNPCByName(bot, messageContent);
+    if (npcByName) {
+      logger.debug(`Selected NPC ${npcByName.id} (${npcByName.name}) by name for user ${userId} in channel ${channelId}`);
+      return npcByName;
     }
 
-    // If no name match, check cache for user's last mentioned bot
+    // If no name match, check cache for user's last mentioned NPC
     const cacheKey = `${userId}:${channelId}`;
-    const lastBotId = this.userLastBotCache.get(cacheKey);
+    const lastNPCId = this.userLastNPCCache.get(cacheKey);
     
-    if (lastBotId) {
-      // Verify the cached bot is still in the available bots list
-      const cachedBot = bots.find(bot => bot.id === lastBotId);
-      if (cachedBot) {
-        logger.debug(`Selected bot ${cachedBot.id} from cache for user ${userId} in channel ${channelId}`);
-        return cachedBot;
+    if (lastNPCId) {
+      // Verify the cached NPC still exists in this world
+      try {
+        const npcService = new NPCService();
+        const npc = await npcService.getNPC(lastNPCId);
+        if (npc && npc.campaignId === bot.worldId) {
+          logger.debug(`Selected NPC ${npc.id} (${npc.name}) from cache for user ${userId} in channel ${channelId}`);
+          return npc;
       } else {
-        // Cached bot is no longer available, remove from cache
-        this.userLastBotCache.delete(cacheKey);
-        logger.debug(`Cached bot ${lastBotId} no longer available, removed from cache`);
+          // Cached NPC is no longer in this world, remove from cache
+          this.userLastNPCCache.delete(cacheKey);
+          logger.debug(`Cached NPC ${lastNPCId} no longer in world, removed from cache`);
+        }
+      } catch (error) {
+        // NPC not found, remove from cache
+        this.userLastNPCCache.delete(cacheKey);
+        logger.debug(`Cached NPC ${lastNPCId} not found, removed from cache`);
       }
     }
 
-    // Fallback to first bot and update cache
-    const fallbackBot = bots[0];
-    this.userLastBotCache.set(cacheKey, fallbackBot.id);
-    logger.debug(`Selected bot ${fallbackBot.id} as fallback for user ${userId} in channel ${channelId}`);
-    return fallbackBot;
+    // Fallback to first NPC in the world
+    try {
+      const npcService = new NPCService();
+      const npcs = await npcService.getNPCs(bot.worldId);
+      if (npcs.length > 0) {
+        const fallbackNPC = npcs[0];
+        logger.debug(`Selected NPC ${fallbackNPC.id} (${fallbackNPC.name}) as fallback for user ${userId} in channel ${channelId}`);
+        return fallbackNPC;
+      }
+    } catch (error) {
+      logger.error({ err: error }, 'Error fetching NPCs for fallback selection');
+    }
+
+    // No NPCs available
+    logger.debug(`No NPCs available in world ${bot.worldId}`);
+    return null;
   }
 
   /**
    * Generates an NPC response using OpenAI
    */
-  private async generateNPCResponse(bot: any, userMessage: string, userId: string, channel: any): Promise<string | null> {
+  private async generateNPCResponse(bot: any, npc: any, userMessage: string, userId: string, channel: any): Promise<string | null> {
     if (!this.openai) {
       logger.error('OpenAI client not initialized');
       return null;
     }
 
     try {
-      // Get NPC and World data
-      const npcService = new NPCService();
+      // Get World data
       const worldService = new WorldService();
-      
-      const [npc, world] = await Promise.all([
-        npcService.getNPC(bot.npcId),
-        worldService.getWorld(bot.worldId),
-      ]);
+      const world = await worldService.getWorld(bot.worldId);
 
       // Build system prompt with NPC and World information
       const systemPrompt = `You are ${npc.name}, a character in a role-playing game set in the world of ${world.name}.

@@ -69,8 +69,8 @@ function NPCs() {
     return (
       <div>
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 dark:bg-[#444] rounded w-48 mb-6"></div>
-          <div className="h-8 bg-gray-200 dark:bg-[#444] rounded w-64 mb-4"></div>
+          <div className="h-6 bg-gray-200 dark:bg-stone-700 rounded w-48 mb-6"></div>
+          <div className="h-8 bg-gray-200 dark:bg-stone-700 rounded w-64 mb-4"></div>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 max-md:grid-cols-1">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
@@ -78,13 +78,13 @@ function NPCs() {
                 className="bg-white dark:bg-[#1a1a1a] rounded-xl p-4 shadow-md"
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 bg-gray-200 dark:bg-[#444] rounded-full"></div>
+                  <div className="w-12 h-12 bg-gray-200 dark:bg-stone-700 rounded-full"></div>
                   <div className="flex-1">
-                    <div className="h-4 bg-gray-200 dark:bg-[#444] rounded w-24 mb-2"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-stone-700 rounded w-24 mb-2"></div>
                   </div>
                 </div>
-                <div className="h-3 bg-gray-200 dark:bg-[#444] rounded w-full mb-2"></div>
-                <div className="h-3 bg-gray-200 dark:bg-[#444] rounded w-3/4"></div>
+                <div className="h-3 bg-gray-200 dark:bg-stone-700 rounded w-full mb-2"></div>
+                <div className="h-3 bg-gray-200 dark:bg-stone-700 rounded w-3/4"></div>
               </div>
             ))}
           </div>
@@ -154,7 +154,7 @@ function NPCs() {
           {npcs.map((npc) => (
             <div
               key={npc.id}
-              className="bg-white dark:bg-[#1a1a1a] rounded-xl p-4 shadow-sm hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors cursor-pointer group"
+              className="bg-white dark:bg-[#1a1a1a] rounded-xl p-4 shadow-sm hover:bg-gray-50 dark:hover:bg-stone-800 transition-colors cursor-pointer group"
               onClick={() => navigate(`/worlds/${worldId}/npcs/${npc.id}`)}
             >
               <div className="flex items-center gap-3 mb-3">

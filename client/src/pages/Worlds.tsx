@@ -90,15 +90,15 @@ function Worlds() {
       />
       
       {isLoading ? (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-6 max-md:grid-cols-1">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4 max-md:grid-cols-1">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
                 className="bg-white dark:bg-[#1a1a1a] rounded-xl p-4 shadow-md animate-pulse"
               >
-                <div className="h-6 bg-gray-200 dark:bg-[#444] rounded mb-4"></div>
-                <div className="h-4 bg-gray-200 dark:bg-[#444] rounded mb-2"></div>
-                <div className="h-4 bg-gray-200 dark:bg-[#444] rounded w-3/4"></div>
+                <div className="h-6 bg-gray-200 dark:bg-stone-700 rounded mb-4"></div>
+                <div className="h-4 bg-gray-200 dark:bg-stone-700 rounded mb-2"></div>
+                <div className="h-4 bg-gray-200 dark:bg-stone-700 rounded w-3/4"></div>
               </div>
             ))}
         </div>
@@ -113,17 +113,17 @@ function Worlds() {
           </button>
         </div>
       ) : worlds.length === 0 ? (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-6 max-md:grid-cols-1">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4 max-md:grid-cols-1">
           <p className="text-gray-600 dark:text-gray-400 text-center col-span-full">
             No worlds yet. Click "Create New" to get started.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-6 max-md:grid-cols-1">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4 max-md:grid-cols-1">
           {worlds.map((world) => (
             <div
               key={world.id}
-              className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors cursor-pointer group overflow-hidden"
+              className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-stone-800 transition-colors cursor-pointer group overflow-hidden"
               onClick={() => navigate(`/worlds/${world.id}`)}
             >
               {/* Thin Banner */}
@@ -157,7 +157,7 @@ function Worlds() {
           onClick={handleCloseModal}
         >
           <div 
-            className="bg-white dark:bg-[#2a2a2a] rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl"
+            className="bg-white dark:bg-stone-800 rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">
@@ -241,7 +241,7 @@ function Worlds() {
 
             <button
               onClick={handleCloseModal}
-              className="w-full mt-3 px-6 py-3 bg-gray-200 dark:bg-[#333] text-gray-700 dark:text-gray-300 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-[#444] transition-colors cursor-pointer"
+              className="w-full mt-3 px-6 py-3 bg-gray-200 dark:bg-stone-700 text-gray-700 dark:text-gray-300 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-[#444] transition-colors cursor-pointer"
             >
               Cancel
             </button>

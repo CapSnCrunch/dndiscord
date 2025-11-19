@@ -7,20 +7,30 @@ export interface Bot {
   discordServerId: string;
   discordChannelId?: string;
   worldId: string;
-  npcId: string;
   userId: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
+export interface BotResponse {
+  content: string;
+  npcId: string;
+  npcName: string;
+  npcImageUrl?: string;
+  channelId: string;
+  createdAt: string;
+}
+
 export const botService = {
   /**
    * Get all bots owned by the current user
+   * @param worldId - Optional world ID to filter bots
    * @returns Array of bots
    */
-  async getBots(): Promise<Bot[]> {
-    const response = await api.get<Bot[]>('/bots');
+  async getBots(worldId?: string): Promise<Bot[]> {
+    const params = worldId ? { worldId } : {};
+    const response = await api.get<Bot[]>('/bots', { params });
     return response.data;
   },
 
@@ -45,7 +55,6 @@ export const botService = {
     discordServerId: string;
     discordChannelId?: string;
     worldId: string;
-    npcId: string;
   }): Promise<{ id: string; inviteUrl?: string }> {
     const response = await api.post<{ id: string; inviteUrl?: string }>('/bots', botData);
     return response.data;
@@ -65,7 +74,6 @@ export const botService = {
       discordServerId?: string;
       discordChannelId?: string;
       worldId?: string;
-      npcId?: string;
     }
   ): Promise<Bot> {
     const response = await api.patch<Bot>(`/bots/${botId}`, botData);
@@ -97,6 +105,19 @@ export const botService = {
    */
   async stopBot(botId: string): Promise<Bot> {
     const response = await api.post<Bot>(`/bots/${botId}/stop`);
+    return response.data;
+  },
+
+  /**
+   * Get recent responses from a bot
+   * @param botId - The ID of the bot
+   * @param limit - Maximum number of responses to retrieve (default: 10)
+   * @returns Array of recent bot responses with NPC information
+   */
+  async getRecentResponses(botId: string, limit: number = 10): Promise<BotResponse[]> {
+    const response = await api.get<BotResponse[]>(`/bots/${botId}/responses`, {
+      params: { limit },
+    });
     return response.data;
   },
 };

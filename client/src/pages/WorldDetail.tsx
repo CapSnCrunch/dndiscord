@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { worldService, type World } from '../services/worldService'
 import { npcService, type NPC } from '../services/npcService'
+import { botService, type Bot } from '../services/botService'
 import PageHeader from '../components/PageHeader'
 import UnsavedChangesBanner from '../components/UnsavedChangesBanner'
 import WorldOverviewCard from '../components/WorldOverviewCard'
 import NPCsListCard from '../components/NPCsListCard'
+import BotsListCard from '../components/BotsListCard'
 import ComingSoonCard from '../components/ComingSoonCard'
 import { Map } from 'lucide-react'
 
@@ -28,6 +30,10 @@ function WorldDetail() {
   const [npcs, setNpcs] = useState<NPC[]>([])
   const [isLoadingNpcs, setIsLoadingNpcs] = useState(false)
   const [isCreatingNpc, setIsCreatingNpc] = useState(false)
+  
+  // Bot state
+  const [bots, setBots] = useState<Bot[]>([])
+  const [isLoadingBots, setIsLoadingBots] = useState(false)
 
   useEffect(() => {
     if (worldId) {
@@ -44,8 +50,9 @@ function WorldDetail() {
       setEditedName(fetchedWorld.name)
       setEditedDescription(fetchedWorld.description || '')
       
-      // Load NPCs for this world
+      // Load NPCs and Bots for this world
       loadNPCs(id)
+      loadBots(id)
     } catch (err) {
       console.error('Error loading world:', err)
       setError('Failed to load world. Please try again.')
@@ -63,6 +70,18 @@ function WorldDetail() {
       console.error('Error loading NPCs:', err)
     } finally {
       setIsLoadingNpcs(false)
+    }
+  }
+
+  const loadBots = async (id: string) => {
+    try {
+      setIsLoadingBots(true)
+      const fetchedBots = await botService.getBots(id)
+      setBots(fetchedBots)
+    } catch (err) {
+      console.error('Error loading bots:', err)
+    } finally {
+      setIsLoadingBots(false)
     }
   }
 
@@ -143,10 +162,10 @@ function WorldDetail() {
     return (
       <div>
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 dark:bg-[#444] rounded w-48 mb-6"></div>
-          <div className="h-8 bg-gray-200 dark:bg-[#444] rounded w-64 mb-4"></div>
-          <div className="h-4 bg-gray-200 dark:bg-[#444] rounded w-full mb-2"></div>
-          <div className="h-4 bg-gray-200 dark:bg-[#444] rounded w-3/4"></div>
+          <div className="h-6 bg-gray-200 dark:bg-stone-700 rounded w-48 mb-6"></div>
+          <div className="h-8 bg-gray-200 dark:bg-stone-700 rounded w-64 mb-4"></div>
+          <div className="h-4 bg-gray-200 dark:bg-stone-700 rounded w-full mb-2"></div>
+          <div className="h-4 bg-gray-200 dark:bg-stone-700 rounded w-3/4"></div>
         </div>
       </div>
     )
@@ -196,12 +215,7 @@ function WorldDetail() {
       />
 
       {/* Feature Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ComingSoonCard 
-          title="Locations" 
-          Icon={Map} 
-        />
-        
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <NPCsListCard
           npcs={npcs}
           isLoading={isLoadingNpcs}
@@ -210,6 +224,22 @@ function WorldDetail() {
           onAddNpc={handleAddNpc}
           onNavigateToNpc={(npcId) => navigate(`/worlds/${worldId}/npcs/${npcId}`)}
           onViewAll={() => navigate(`/worlds/${worldId}/npcs`)}
+        />
+        
+        <BotsListCard
+          bots={bots}
+          isLoading={isLoadingBots}
+          onNavigateToBot={(botId) => navigate(`/bots/${botId}`)}
+          onViewAll={() => navigate('/bots')}
+          onAddBot={() => navigate(`/bots?worldId=${worldId}`)}
+        />
+      </div>
+      
+      {/* Additional Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <ComingSoonCard 
+          title="Locations" 
+          Icon={Map} 
         />
       </div>
 

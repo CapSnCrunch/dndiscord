@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { botService, type Bot } from '../services/botService'
 import { worldService, type World } from '../services/worldService'
 import PageHeader from '../components/PageHeader'
+import RecentBotResponses from '../components/RecentBotResponses'
 import { Bot as BotIcon, Power, PowerOff, Trash2 } from 'lucide-react'
 
 function BotDetail() {
@@ -90,10 +91,10 @@ function BotDetail() {
     return (
       <div>
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 dark:bg-[#444] rounded w-48 mb-6"></div>
-          <div className="h-8 bg-gray-200 dark:bg-[#444] rounded w-64 mb-4"></div>
-          <div className="h-4 bg-gray-200 dark:bg-[#444] rounded w-full mb-2"></div>
-          <div className="h-4 bg-gray-200 dark:bg-[#444] rounded w-3/4"></div>
+          <div className="h-6 bg-gray-200 dark:bg-stone-700 rounded w-48 mb-6"></div>
+          <div className="h-8 bg-gray-200 dark:bg-stone-700 rounded w-64 mb-4"></div>
+          <div className="h-4 bg-gray-200 dark:bg-stone-700 rounded w-full mb-2"></div>
+          <div className="h-4 bg-gray-200 dark:bg-stone-700 rounded w-3/4"></div>
         </div>
       </div>
     )
@@ -142,7 +143,7 @@ function BotDetail() {
       />
       
       {/* Bot Overview Card */}
-      <div className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm mb-6 overflow-hidden">
+      <div className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm mb-4 overflow-hidden">
         {/* Gradient Banner */}
         <div className="h-32 bg-gradient-to-r from-purple-100 via-indigo-100 to-blue-100 dark:from-purple-900/20 dark:via-indigo-900/20 dark:to-blue-900/20"></div>
         
@@ -181,7 +182,7 @@ function BotDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div className="bg-white dark:bg-[#1a1a1a] rounded-xl p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Configuration
@@ -195,7 +196,7 @@ function BotDetail() {
                 type="text"
                 value={bot.discordServerId}
                 readOnly
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-[#0a0a0a] border border-gray-300 dark:border-[#333] rounded-lg text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202225] border border-gray-300 dark:border-stone-700 rounded-lg text-gray-900 dark:text-white"
               />
             </div>
             {bot.discordChannelId && (
@@ -207,7 +208,7 @@ function BotDetail() {
                   type="text"
                   value={bot.discordChannelId}
                   readOnly
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-[#0a0a0a] border border-gray-300 dark:border-[#333] rounded-lg text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-[#202225] border border-gray-300 dark:border-stone-700 rounded-lg text-gray-900 dark:text-white"
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   Bot is configured for this specific channel
@@ -220,16 +221,21 @@ function BotDetail() {
               </p>
             )}
             
-            <div className="pt-4 border-t border-gray-200 dark:border-[#2a2a2a]">
+            <div className="pt-4 border-t border-gray-200 dark:border-stone-800">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
                 Associated World
               </label>
               {world ? (
-                <div
-                  onClick={() => navigate(`/worlds/${world.id}`)}
-                  className="text-[#667eea] font-medium hover:text-[#5568d3] transition-colors cursor-pointer"
-                >
-                  {world.name}
+                <div>
+                  <div
+                    onClick={() => navigate(`/worlds/${world.id}`)}
+                    className="text-[#667eea] font-medium hover:text-[#5568d3] transition-colors cursor-pointer inline-block mb-2"
+                  >
+                    {world.name}
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    This bot enables conversations with all NPCs in this world
+                  </p>
                 </div>
               ) : (
                 <span className="text-gray-500 dark:text-gray-400">Loading...</span>
@@ -265,6 +271,9 @@ function BotDetail() {
           </div>
         </div>
       </div>
+
+      {/* Recent Bot Responses */}
+      <RecentBotResponses botId={bot.id} />
     </div>
   )
 }

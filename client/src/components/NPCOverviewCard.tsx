@@ -33,7 +33,7 @@ function NPCOverviewCard({
   setIsEditingDescription
 }: NPCOverviewCardProps) {
   return (
-    <div className="bg-white dark:bg-[#1a1a1a] rounded-xl p-6 shadow-sm mb-6">
+    <div className="bg-white dark:bg-[#1a1a1a] rounded-xl p-6 shadow-sm mb-4">
       <div className="flex items-start gap-4 mb-6">
         <div 
           onClick={onImageClick}
@@ -65,11 +65,11 @@ function NPCOverviewCard({
               onChange={(e) => onNameChange(e.target.value)}
               onBlur={() => setIsEditingName(false)}
               autoFocus
-              className="text-[2rem] font-semibold text-gray-900 dark:text-white mb-2 border-none outline-none bg-gray-200/70 dark:bg-[#333] rounded px-2 -ml-2 w-full"
+              className="text-[2rem] font-semibold text-gray-900 dark:text-white mb-2 border-none outline-none bg-gray-200/70 dark:bg-stone-700 rounded px-2 -ml-2 w-full"
             />
           ) : (
             <h1 
-              className="m-0 text-[2rem] font-semibold text-gray-900 dark:text-white mb-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2a2a2a] rounded px-2 -ml-2 transition-colors"
+              className="m-0 text-[2rem] font-semibold text-gray-900 dark:text-white mb-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-stone-800 rounded px-2 -ml-2 transition-colors"
               onClick={() => setIsEditingName(true)}
               title="Click to edit"
             >
@@ -93,12 +93,12 @@ function NPCOverviewCard({
             onBlur={() => setIsEditingDescription(false)}
             autoFocus
             rows={6}
-            className="w-full text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed border-none outline-none bg-gray-200/70 dark:bg-[#333] rounded p-3 resize-none [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-gray-500"
+            className="w-full text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed border-none outline-none bg-gray-200/70 dark:bg-stone-700 rounded p-3 resize-none [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-400 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-gray-500"
             placeholder="Add a description..."
           />
         ) : (
           <div
-            className="cursor-pointer hover:bg-gray-50 dark:hover:bg-[#2a2a2a] rounded p-3 -ml-3 transition-colors max-h-[200px] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-gray-400 dark:[&::-webkit-scrollbar-thumb]:hover:bg-gray-500"
+            className="cursor-pointer hover:bg-gray-50 dark:hover:bg-stone-800 rounded p-3 -ml-3 transition-colors max-h-[200px] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-gray-400 dark:[&::-webkit-scrollbar-thumb]:hover:bg-gray-500"
             onClick={() => setIsEditingDescription(true)}
             title="Click to edit"
           >

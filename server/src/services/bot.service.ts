@@ -13,7 +13,6 @@ export interface Bot {
   discordServerId: string;
   discordChannelId?: string; // Optional - if not provided, bot works in all channels of the server
   worldId: string;
-  npcId: string;
   userId: string;
   isActive: boolean; // Whether the bot is currently active/running
   createdAt: Date;
@@ -26,7 +25,6 @@ export interface CreateBotData {
   discordServerId: string;
   discordChannelId?: string;
   worldId: string;
-  npcId: string;
   userId: string;
 }
 
@@ -36,7 +34,6 @@ export interface UpdateBotData {
   discordServerId?: string;
   discordChannelId?: string;
   worldId?: string;
-  npcId?: string;
 }
 
 export interface CreateBotResult {
@@ -49,11 +46,68 @@ export class BotService {
   private readonly discordService: DiscordService;
   private readonly npcService: NPCService;
   private readonly imageService: ImageService;
+  private discordBotService?: any; // DiscordBotService instance (optional to avoid circular dependency)
 
   constructor(npcService?: NPCService, imageService?: ImageService) {
     this.discordService = new DiscordService();
     this.npcService = npcService || new NPCService();
     this.imageService = imageService || new ImageService();
+  }
+
+  /**
+   * Sets the Discord bot service instance
+   * @param discordBotService - The Discord bot service instance
+   */
+  setDiscordBotService(discordBotService: any): void {
+    this.discordBotService = discordBotService;
+  }
+
+  /**
+   * Validates that creating a bot won't conflict with existing bots
+   * Rules:
+   * - If creating a server-level bot (no channelId), no other bots can exist for that server
+   * - If creating a channel-level bot, no server-level bot can exist for that server and no bot for that channel
+   * @param serverId - The Discord server ID
+   * @param channelId - The optional Discord channel ID
+   * @throws ValidationException if there are conflicts
+   */
+  private async validateNoBotConflicts(serverId: string, channelId?: string): Promise<void> {
+    // Get all bots for this server
+    const existingBots = await this.botCollection
+      .where('discordServerId', '==', serverId)
+      .get();
+
+    if (existingBots.empty) {
+      // No existing bots, no conflicts
+      return;
+    }
+
+    // If creating a server-level bot (no channelId)
+    if (!channelId) {
+      // Cannot have ANY other bots in this server
+      throw new ValidationException(
+        'A bot already exists for this Discord server. Please delete the existing bot first, or specify a specific channel ID.'
+      );
+    }
+
+    // If creating a channel-level bot, check for conflicts
+    for (const doc of existingBots.docs) {
+      const existingBot = doc.data();
+      
+      // Check if there's a server-level bot
+      if (!existingBot.discordChannelId) {
+        throw new ValidationException(
+          'A server-wide bot already exists for this Discord server. Please delete it first to create channel-specific bots.'
+        );
+      }
+      
+      // Check if there's already a bot for this specific channel
+      if (existingBot.discordChannelId === channelId) {
+        throw new ValidationException(
+          'A bot already exists for this Discord channel. Please delete it first or choose a different channel.'
+        );
+      }
+    }
   }
 
   /**
@@ -71,9 +125,9 @@ export class BotService {
     if (!botData.worldId) {
       throw new ValidationException('World ID is required');
     }
-    if (!botData.npcId) {
-      throw new ValidationException('NPC ID is required');
-    }
+
+    // Check for bot conflicts before creating
+    await this.validateNoBotConflicts(botData.discordServerId, botData.discordChannelId);
 
     // Get shared bot token from environment
     const sharedBotToken = process.env.DISCORD_BOT_TOKEN;
@@ -102,7 +156,6 @@ export class BotService {
       discordBotToken: sharedBotToken, // Store the shared token for reference
       discordServerId: botData.discordServerId.trim(),
       worldId: botData.worldId,
-      npcId: botData.npcId,
       userId: botData.userId,
       isActive: true, // New bots are active by default
       createdAt: new Date(),
@@ -195,30 +248,6 @@ export class BotService {
     });
   }
 
-  /**
-   * Gets all bots for a specific NPC
-   * @param npcId - The ID of the NPC
-   * @returns Array of bots sorted by updatedAt (descending)
-   */
-  async getBotsByNPC(npcId: string): Promise<Bot[]> {
-    const snapshot = await this.botCollection
-      .where('npcId', '==', npcId)
-      .get();
-
-    const bots = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...(doc.data()),
-      createdAt: doc.data()?.createdAt?.toDate(),
-      updatedAt: doc.data()?.updatedAt?.toDate(),
-    })) as Bot[];
-
-    // Sort by updatedAt descending in memory
-    return bots.sort((a, b) => {
-      const aTime = a.updatedAt.getTime();
-      const bTime = b.updatedAt.getTime();
-      return bTime - aTime; // Descending order
-    });
-  }
 
   /**
    * Updates a bot in the database
@@ -258,9 +287,6 @@ export class BotService {
     }
     if (updateData.worldId !== undefined) {
       updates.worldId = updateData.worldId;
-    }
-    if (updateData.npcId !== undefined) {
-      updates.npcId = updateData.npcId;
     }
 
     await docRef.update(updates);
@@ -414,135 +440,138 @@ export class BotService {
   }
 
   /**
-   * Finds the best matching bot based on NPC name mentioned in the message
-   * @param bots - Array of candidate bots
+   * Finds the NPC mentioned in the message from the bot's world
+   * @param bot - The bot configuration
    * @param messageContent - The message content to search for NPC names
-   * @returns The best matching bot and whether it was matched by name
+   * @returns The matching NPC or null if no match found
    */
-  async findBotByNPCName(bots: Bot[], messageContent: string): Promise<{ bot: Bot | null; matchedByName: boolean }> {
-    if (bots.length === 0) {
-      return { bot: null, matchedByName: false };
-    }
-
-    if (bots.length === 1) {
-      return { bot: bots[0], matchedByName: false };
-    }
-
-    // Fetch NPC data for all bots to check names
-    const npcPromises = bots.map(bot => 
-      this.npcService.getNPC(bot.npcId).catch(() => null)
-    );
-    const npcs = await Promise.all(npcPromises);
-
-    // Create a map of bot to NPC
-    const botToNPC = new Map<Bot, NPC | null>();
-    bots.forEach((bot, index) => {
-      botToNPC.set(bot, npcs[index]);
-    });
+  async findNPCByName(bot: Bot, messageContent: string): Promise<NPC | null> {
+    try {
+      // Fetch all NPCs from the bot's world
+      const npcs = await this.npcService.getNPCs(bot.worldId);
+      
+      if (npcs.length === 0) {
+        logger.debug(`No NPCs found in world ${bot.worldId}`);
+        return null;
+      }
 
     // Normalize message content for matching (case-insensitive)
     const normalizedMessage = messageContent.toLowerCase();
 
     // Try to find exact name match first
-    for (const bot of bots) {
-      const npc = botToNPC.get(bot);
-      if (npc) {
+      for (const npc of npcs) {
         const npcNameLower = npc.name.toLowerCase();
         // Check if NPC name appears in the message (as a whole word if possible)
         const nameRegex = new RegExp(`\\b${npcNameLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
         if (nameRegex.test(normalizedMessage)) {
           logger.debug(`Matched NPC "${npc.name}" from message content`);
-          return { bot, matchedByName: true };
-        }
+          return npc;
       }
     }
 
     // If no exact match, try partial match
-    for (const bot of bots) {
-      const npc = botToNPC.get(bot);
-      if (npc) {
+      for (const npc of npcs) {
         const npcNameLower = npc.name.toLowerCase();
         if (normalizedMessage.includes(npcNameLower)) {
           logger.debug(`Matched NPC "${npc.name}" from message content (partial match)`);
-          return { bot, matchedByName: true };
-        }
+          return npc;
       }
     }
 
-    // If no name match, return the first bot (channel-specific bots take priority due to findBotsForChannel ordering)
-    logger.debug(`No NPC name match found, using first bot`);
-    return { bot: bots[0], matchedByName: false };
+      // No match found
+      logger.debug(`No NPC name match found in message`);
+      return null;
+    } catch (error) {
+      logger.error({ err: error }, 'Error finding NPC by name');
+      return null;
+  }
   }
 
-  /**
-   * Stores a message in the conversation history
-   * @param botId - The bot ID
-   * @param channelId - The Discord channel ID
-   * @param role - The role of the message sender ('user' or 'assistant')
-   * @param content - The message content
-   * @param userId - Optional user ID (for user messages)
-   */
-  async storeMessage(botId: string, channelId: string, role: 'user' | 'assistant', content: string, userId?: string): Promise<void> {
-    const messagesCollection = firestore
-      .collection('botMessages')
-      .doc(botId)
-      .collection('channels')
-      .doc(channelId)
-      .collection('messages');
-
-    await messagesCollection.add({
-      role,
-      content,
-      userId,
-      createdAt: new Date(),
-    });
-  }
 
   /**
-   * Gets recent message history for a bot in a channel
+   * Gets recent bot responses from Discord
    * @param botId - The bot ID
-   * @param channelId - The Discord channel ID
-   * @param limit - Maximum number of messages to retrieve (default: 20)
-   * @returns Array of messages ordered by creation time (oldest first)
+   * @param limit - Maximum number of responses to retrieve (default: 10)
+   * @returns Array of recent responses with NPC information
    */
-  async getMessageHistory(botId: string, channelId: string, limit: number = 20): Promise<Array<{ role: 'user' | 'assistant'; content: string; createdAt: Date }>> {
-    const messagesCollection = firestore
-      .collection('botMessages')
-      .doc(botId)
-      .collection('channels')
-      .doc(channelId)
-      .collection('messages');
+  async getRecentResponses(botId: string, limit: number = 10): Promise<Array<{
+    content: string;
+    npcId: string;
+    npcName: string;
+    npcImageUrl?: string;
+    channelId: string;
+    createdAt: Date;
+  }>> {
+    try {
+      // If Discord bot service is not available, return empty array
+      if (!this.discordBotService) {
+        logger.warn('Discord bot service not available, cannot fetch recent responses');
+        return [];
+      }
 
-    const snapshot = await messagesCollection
-      .orderBy('createdAt', 'desc')
-      .limit(limit)
-      .get();
+      // Get bot configuration
+      const bot = await this.getBot(botId);
 
-    const messages = snapshot.docs.map(doc => ({
-      role: doc.data().role as 'user' | 'assistant',
-      content: doc.data().content,
-      createdAt: doc.data().createdAt.toDate(),
-    }));
+      // Fetch recent webhook messages from Discord
+      const messages = await this.discordBotService.fetchRecentWebhookMessages(bot, limit);
 
-    // Reverse to get chronological order (oldest first)
-    return messages.reverse();
+      // Fetch NPC information and image URLs for each message
+      const responsesWithImages = await Promise.all(
+        messages.map(async (message: { content: string; npcId: string; npcName: string; channelId: string; createdAt: Date }) => {
+          try {
+            const npc = await this.npcService.getNPC(message.npcId);
+            let npcImageUrl: string | undefined;
+            
+            if (npc.imagePath) {
+              npcImageUrl = await this.imageService.getSignedUrl(npc.imagePath, 3600); // 1 hour expiry
+            }
+
+            return {
+              content: message.content,
+              npcId: message.npcId,
+              npcName: message.npcName,
+              npcImageUrl,
+              channelId: message.channelId,
+              createdAt: message.createdAt,
+            };
+          } catch (error) {
+            logger.error({ err: error, npcId: message.npcId }, 'Error fetching NPC data for response');
+            // Return without image if NPC fetch fails
+            return {
+              content: message.content,
+              npcId: message.npcId,
+              npcName: message.npcName,
+              npcImageUrl: undefined,
+              channelId: message.channelId,
+              createdAt: message.createdAt,
+            };
+          }
+        })
+      );
+
+      return responsesWithImages;
+    } catch (error) {
+      logger.error({ err: error, botId }, 'Error fetching recent bot responses');
+      return [];
+    }
   }
 
   /**
    * Sends an NPC response via webhook
    * This method handles getting the bot config, NPC data, image URL, and sending via webhook
    * @param botId - The bot ID
+   * @param npcId - The NPC ID
    * @param channelId - The Discord channel ID
    * @param messageContent - The message content to send
    * @returns True if message was sent successfully, false otherwise
    */
-  async sendNPCResponse(botId: string, channelId: string, messageContent: string): Promise<boolean> {
+  async sendNPCResponse(botId: string, npcId: string, channelId: string, messageContent: string): Promise<boolean> {
     try {
       // Get bot configuration
       const bot = await this.getBot(botId);
 
       // Get the NPC data
-      const npc = await this.npcService.getNPC(bot.npcId);
+      const npc = await this.npcService.getNPC(npcId);
       
       // Get the NPC's image URL if available
       let avatarUrl: string | undefined;

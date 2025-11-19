@@ -44,12 +44,12 @@ function NPCsListCard({
       </div>
       
       {isLoading ? (
-        <div className="border-t border-gray-100 dark:border-[#2a2a2a]">
+        <div className="border-t border-gray-100 dark:border-stone-800">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="animate-pulse flex items-center gap-3 py-3 px-6 border-b border-gray-100 dark:border-[#2a2a2a]">
-              <div className="w-12 h-12 bg-gray-200 dark:bg-[#444] rounded-full"></div>
+            <div key={i} className="animate-pulse flex items-center gap-3 py-3 px-6 border-b border-gray-100 dark:border-stone-800">
+              <div className="w-12 h-12 bg-gray-200 dark:bg-stone-700 rounded-full"></div>
               <div className="flex-1">
-                <div className="h-4 bg-gray-200 dark:bg-[#444] rounded w-24 mb-2"></div>
+                <div className="h-4 bg-gray-200 dark:bg-stone-700 rounded w-24 mb-2"></div>
               </div>
             </div>
           ))}
@@ -60,12 +60,12 @@ function NPCsListCard({
         </p>
       ) : (
         <>
-          <div className="border-t border-gray-100 dark:border-[#2a2a2a]">
+          <div className="border-t border-gray-100 dark:border-stone-800">
             {npcs.slice(0, 3).map((npc) => (
               <div
                 key={npc.id}
                 onClick={() => onNavigateToNpc(npc.id)}
-                className="flex items-center gap-3 py-3 px-6 border-b border-gray-100 dark:border-[#2a2a2a] hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-colors cursor-pointer group"
+                className="flex items-center gap-3 py-3 px-6 border-b border-gray-100 dark:border-stone-800 hover:bg-gray-50 dark:hover:bg-stone-800 transition-colors cursor-pointer group"
               >
                 <div className={`w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden ${
                   npc.imageUrl ? '' : 'bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 text-gray-500 dark:text-gray-400 p-1.5'

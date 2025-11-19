@@ -184,10 +184,10 @@ function NPCDetail() {
     return (
       <div>
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 dark:bg-[#444] rounded w-48 mb-6"></div>
-          <div className="h-8 bg-gray-200 dark:bg-[#444] rounded w-64 mb-4"></div>
-          <div className="h-4 bg-gray-200 dark:bg-[#444] rounded w-full mb-2"></div>
-          <div className="h-4 bg-gray-200 dark:bg-[#444] rounded w-3/4"></div>
+          <div className="h-6 bg-gray-200 dark:bg-stone-700 rounded w-48 mb-6"></div>
+          <div className="h-8 bg-gray-200 dark:bg-stone-700 rounded w-64 mb-4"></div>
+          <div className="h-4 bg-gray-200 dark:bg-stone-700 rounded w-full mb-2"></div>
+          <div className="h-4 bg-gray-200 dark:bg-stone-700 rounded w-3/4"></div>
         </div>
       </div>
     )
@@ -263,7 +263,7 @@ function NPCDetail() {
       />
 
       {/* Additional NPC Details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white dark:bg-[#1a1a1a] rounded-xl p-6 shadow-sm">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2 leading-tight">
             <Users size={20} className="text-gray-600 dark:text-gray-400 flex-shrink-0" />

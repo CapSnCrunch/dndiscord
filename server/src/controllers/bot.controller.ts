@@ -17,7 +17,6 @@ export interface CreateBotRequest {
   discordServerId: string;
   discordChannelId?: string;
   worldId: string;
-  npcId: string;
 }
 
 export interface UpdateBotRequest {
@@ -26,7 +25,6 @@ export interface UpdateBotRequest {
   discordServerId?: string;
   discordChannelId?: string;
   worldId?: string;
-  npcId?: string;
 }
 
 export class BotController {
@@ -55,9 +53,6 @@ export class BotController {
         if (!req.body.worldId) {
           throw new ValidationException('World ID is required');
         }
-        if (!req.body.npcId) {
-          throw new ValidationException('NPC ID is required');
-        }
 
         const result: CreateBotResult = await this.botService.createBot({
           name: req.body.name.trim(),
@@ -65,7 +60,6 @@ export class BotController {
           discordServerId: req.body.discordServerId.trim(),
           discordChannelId: req.body.discordChannelId?.trim(),
           worldId: req.body.worldId,
-          npcId: req.body.npcId,
           userId: req.userId!,
         });
 
@@ -78,6 +72,18 @@ export class BotController {
       '/',
       authenticateUser(),
       asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+        const { worldId } = req.query;
+        
+        // If worldId is provided, get bots for that world
+        if (worldId && typeof worldId === 'string') {
+          const bots = await this.botService.getBotsByWorld(worldId);
+          // Filter to only return bots owned by the authenticated user
+          const userBots = bots.filter(bot => bot.userId === req.userId);
+          res.json(userBots);
+          return;
+        }
+        
+        // Otherwise get all bots for the user
         const bots = await this.botService.getBots(req.userId!);
         res.json(bots);
       })
@@ -106,7 +112,6 @@ export class BotController {
           ...(req.body.discordServerId !== undefined && { discordServerId: req.body.discordServerId }),
           ...(req.body.discordChannelId !== undefined && { discordChannelId: req.body.discordChannelId }),
           ...(req.body.worldId !== undefined && { worldId: req.body.worldId }),
-          ...(req.body.npcId !== undefined && { npcId: req.body.npcId }),
         };
 
         const updatedBot = await this.botService.updateBot(req.params.botId, updateData);
@@ -144,6 +149,18 @@ export class BotController {
         await this.validateBotOwnership(req.params.botId, req.userId!);
         const updatedBot = await this.botService.stopBot(req.params.botId);
         res.json(updatedBot);
+      })
+    );
+
+    // Get recent bot responses
+    router.get(
+      '/:botId/responses',
+      authenticateUser(),
+      asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+        await this.validateBotOwnership(req.params.botId, req.userId!);
+        const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
+        const responses = await this.botService.getRecentResponses(req.params.botId, limit);
+        res.json(responses);
       })
     );
   }

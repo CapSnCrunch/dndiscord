@@ -26,7 +26,7 @@ function Profile() {
           </div>
           <button 
             type="button"
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-[#0f0f0f] border border-gray-300 dark:border-[#444] rounded-lg hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors cursor-pointer"
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-[#202225] border border-gray-300 dark:border-stone-700 rounded-lg hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors cursor-pointer"
           >
             Choose picture
           </button>
@@ -41,7 +41,7 @@ function Profile() {
             type="text"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            className="w-full px-4 py-2 bg-white dark:bg-[#0f0f0f] border border-gray-300 dark:border-[#444] rounded-lg text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent transition-colors"
+            className="w-full px-4 py-2 bg-white dark:bg-[#202225] border border-gray-300 dark:border-stone-700 rounded-lg text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent transition-colors"
             placeholder="Enter your full name"
           />
         </div>
@@ -55,7 +55,7 @@ function Profile() {
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            className="w-full px-4 py-2 bg-white dark:bg-[#0f0f0f] border border-gray-300 dark:border-[#444] rounded-lg text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent transition-colors"
+            className="w-full px-4 py-2 bg-white dark:bg-[#202225] border border-gray-300 dark:border-stone-700 rounded-lg text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent transition-colors"
             placeholder="Enter your display name"
           />
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -72,7 +72,7 @@ function Profile() {
             type="date"
             value={birthday}
             onChange={(e) => setBirthday(e.target.value)}
-            className="w-full px-4 py-2 bg-white dark:bg-[#0f0f0f] border border-gray-300 dark:border-[#444] rounded-lg text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent transition-colors"
+            className="w-full px-4 py-2 bg-white dark:bg-[#202225] border border-gray-300 dark:border-stone-700 rounded-lg text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent transition-colors"
           />
         </div>
 
@@ -84,7 +84,7 @@ function Profile() {
           <select
             value={timezone}
             onChange={(e) => setTimezone(e.target.value)}
-            className="w-full px-4 py-2 bg-white dark:bg-[#0f0f0f] border border-gray-300 dark:border-[#444] rounded-lg text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent transition-colors"
+            className="w-full px-4 py-2 bg-white dark:bg-[#202225] border border-gray-300 dark:border-stone-700 rounded-lg text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#667eea] focus:border-transparent transition-colors"
           >
             <option value="">Select...</option>
             <option value="America/New_York">Eastern Time (ET)</option>

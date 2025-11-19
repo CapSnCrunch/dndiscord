@@ -56,7 +56,7 @@ function SignUp() {
           <h3 className="text-[2.5rem] font-medieval text-gray-900 dark:text-white mb-2">Sign Up</h3>
           <h4 className="text-xl text-gray-600 dark:text-[#bbb] mb-8 font-normal">Create an account to get started!</h4>
 
-          <div className="w-full relative flex items-center justify-between rounded-2xl border-2 border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3 mb-4 transition-all text-xl hover:border-[#667eea] focus-within:border-[#667eea] shadow-sm dark:shadow-none">
+          <div className="w-full relative flex items-center justify-between rounded-2xl border-2 border-gray-200 dark:border-stone-700 bg-white dark:bg-[#1a1a1a] px-4 py-3 mb-4 transition-all text-xl hover:border-[#667eea] focus-within:border-[#667eea] shadow-sm dark:shadow-none">
             <input
               className="flex-1 bg-transparent border-none outline-none text-gray-900 dark:text-white text-xl p-0 w-full placeholder:text-gray-400 dark:placeholder:text-[#888] disabled:opacity-60 disabled:cursor-not-allowed"
               type="text"
@@ -78,7 +78,7 @@ function SignUp() {
             )}
           </div>
 
-          <div className="w-full relative flex items-center justify-between rounded-2xl border-2 border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3 mb-4 transition-all text-xl hover:border-[#667eea] focus-within:border-[#667eea] shadow-sm dark:shadow-none">
+          <div className="w-full relative flex items-center justify-between rounded-2xl border-2 border-gray-200 dark:border-stone-700 bg-white dark:bg-[#1a1a1a] px-4 py-3 mb-4 transition-all text-xl hover:border-[#667eea] focus-within:border-[#667eea] shadow-sm dark:shadow-none">
             <input
               className="flex-1 bg-transparent border-none outline-none text-gray-900 dark:text-white text-xl p-0 w-full placeholder:text-gray-400 dark:placeholder:text-[#888] disabled:opacity-60 disabled:cursor-not-allowed"
               type="password"

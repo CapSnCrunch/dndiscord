@@ -24,7 +24,7 @@ function WorldOverviewCard({
   setIsEditingDescription
 }: WorldOverviewCardProps) {
   return (
-    <div className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm mb-6 overflow-hidden">
+    <div className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm mb-4 overflow-hidden">
       {/* Banner */}
       <div className="h-40 bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100 dark:from-blue-900/20 dark:via-purple-900/20 dark:to-pink-900/20"></div>
       
