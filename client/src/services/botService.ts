@@ -9,6 +9,7 @@ export interface Bot {
   worldId: string;
   npcId: string;
   userId: string;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -77,6 +78,26 @@ export const botService = {
    */
   async deleteBot(botId: string): Promise<void> {
     await api.delete(`/bots/${botId}`);
+  },
+
+  /**
+   * Start a bot (set isActive to true)
+   * @param botId - The ID of the bot to start
+   * @returns The updated bot
+   */
+  async startBot(botId: string): Promise<Bot> {
+    const response = await api.post<Bot>(`/bots/${botId}/start`);
+    return response.data;
+  },
+
+  /**
+   * Stop a bot (set isActive to false)
+   * @param botId - The ID of the bot to stop
+   * @returns The updated bot
+   */
+  async stopBot(botId: string): Promise<Bot> {
+    const response = await api.post<Bot>(`/bots/${botId}/stop`);
+    return response.data;
   },
 };
 

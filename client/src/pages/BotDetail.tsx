@@ -13,6 +13,7 @@ function BotDetail() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false)
 
   useEffect(() => {
     if (botId) {
@@ -52,6 +53,36 @@ function BotDetail() {
       alert('Failed to delete bot. Please try again.')
     } finally {
       setIsDeleting(false)
+    }
+  }
+
+  const handleStartBot = async () => {
+    if (!bot) return
+    
+    try {
+      setIsTogglingStatus(true)
+      const updatedBot = await botService.startBot(bot.id)
+      setBot(updatedBot)
+    } catch (err) {
+      console.error('Error starting bot:', err)
+      alert('Failed to start bot. Please try again.')
+    } finally {
+      setIsTogglingStatus(false)
+    }
+  }
+
+  const handleStopBot = async () => {
+    if (!bot) return
+    
+    try {
+      setIsTogglingStatus(true)
+      const updatedBot = await botService.stopBot(bot.id)
+      setBot(updatedBot)
+    } catch (err) {
+      console.error('Error stopping bot:', err)
+      alert('Failed to stop bot. Please try again.')
+    } finally {
+      setIsTogglingStatus(false)
     }
   }
 
@@ -127,8 +158,8 @@ function BotDetail() {
               </h1>
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                  <span className="text-gray-600 dark:text-gray-400">Active</span>
+                  <div className={`w-2 h-2 rounded-full ${bot.isActive ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                  <span className="text-gray-600 dark:text-gray-400">{bot.isActive ? 'Active' : 'Inactive'}</span>
                 </div>
                 <span className="text-gray-600 dark:text-gray-400">
                   Updated {new Date(bot.updatedAt).toLocaleDateString()}
@@ -212,20 +243,25 @@ function BotDetail() {
             Quick Actions
           </h2>
           <div className="space-y-2">
-            <button
-              className="w-full flex items-center gap-3 px-4 py-3 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg transition-colors cursor-pointer border-none text-left leading-none"
-              onClick={() => alert('Start bot functionality coming soon!')}
-            >
-              <Power size={20} className="flex-shrink-0" />
-              <span className="font-medium leading-none">Start Bot</span>
-            </button>
-            <button
-              className="w-full flex items-center gap-3 px-4 py-3 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg transition-colors cursor-pointer border-none text-left leading-none"
-              onClick={() => alert('Stop bot functionality coming soon!')}
-            >
-              <PowerOff size={20} className="flex-shrink-0" />
-              <span className="font-medium leading-none">Stop Bot</span>
-            </button>
+            {bot.isActive ? (
+              <button
+                className="w-full flex items-center gap-3 px-4 py-3 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-700 dark:text-red-400 rounded-lg transition-colors cursor-pointer border-none text-left leading-none disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleStopBot}
+                disabled={isTogglingStatus}
+              >
+                <PowerOff size={20} className="flex-shrink-0" />
+                <span className="font-medium leading-none">{isTogglingStatus ? 'Stopping...' : 'Stop Bot'}</span>
+              </button>
+            ) : (
+              <button
+                className="w-full flex items-center gap-3 px-4 py-3 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg transition-colors cursor-pointer border-none text-left leading-none disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleStartBot}
+                disabled={isTogglingStatus}
+              >
+                <Power size={20} className="flex-shrink-0" />
+                <span className="font-medium leading-none">{isTogglingStatus ? 'Starting...' : 'Start Bot'}</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

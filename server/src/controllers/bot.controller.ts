@@ -124,6 +124,28 @@ export class BotController {
         res.status(StatusCodes.NO_CONTENT).send();
       })
     );
+
+    // Start a bot
+    router.post(
+      '/:botId/start',
+      authenticateUser(),
+      asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+        await this.validateBotOwnership(req.params.botId, req.userId!);
+        const updatedBot = await this.botService.startBot(req.params.botId);
+        res.json(updatedBot);
+      })
+    );
+
+    // Stop a bot
+    router.post(
+      '/:botId/stop',
+      authenticateUser(),
+      asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+        await this.validateBotOwnership(req.params.botId, req.userId!);
+        const updatedBot = await this.botService.stopBot(req.params.botId);
+        res.json(updatedBot);
+      })
+    );
   }
 
   /**

@@ -15,6 +15,7 @@ export interface Bot {
   worldId: string;
   npcId: string;
   userId: string;
+  isActive: boolean; // Whether the bot is currently active/running
   createdAt: Date;
   updatedAt: Date;
 }
@@ -103,6 +104,7 @@ export class BotService {
       worldId: botData.worldId,
       npcId: botData.npcId,
       userId: botData.userId,
+      isActive: true, // New bots are active by default
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -289,11 +291,66 @@ export class BotService {
   }
 
   /**
+   * Starts a bot (sets isActive to true)
+   * @param botId - The ID of the bot to start
+   * @returns The updated bot
+   * @throws NotFoundException if bot does not exist
+   */
+  async startBot(botId: string): Promise<Bot> {
+    const docRef = this.botCollection.doc(botId);
+    const doc = await docRef.get();
+    if (!doc.exists) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    await docRef.update({
+      isActive: true,
+      updatedAt: new Date(),
+    });
+
+    const updatedDoc = await docRef.get();
+    return {
+      id: updatedDoc.id,
+      ...(updatedDoc.data()),
+      createdAt: updatedDoc.data()?.createdAt?.toDate(),
+      updatedAt: updatedDoc.data()?.updatedAt?.toDate(),
+    } as Bot;
+  }
+
+  /**
+   * Stops a bot (sets isActive to false)
+   * @param botId - The ID of the bot to stop
+   * @returns The updated bot
+   * @throws NotFoundException if bot does not exist
+   */
+  async stopBot(botId: string): Promise<Bot> {
+    const docRef = this.botCollection.doc(botId);
+    const doc = await docRef.get();
+    if (!doc.exists) {
+      throw new NotFoundException('Bot not found');
+    }
+
+    await docRef.update({
+      isActive: false,
+      updatedAt: new Date(),
+    });
+
+    const updatedDoc = await docRef.get();
+    return {
+      id: updatedDoc.id,
+      ...(updatedDoc.data()),
+      createdAt: updatedDoc.data()?.createdAt?.toDate(),
+      updatedAt: updatedDoc.data()?.updatedAt?.toDate(),
+    } as Bot;
+  }
+
+  /**
    * Finds all bot configurations that match the given server and channel
    * Priority: exact channel match > server-wide match
+   * Only returns active bots (isActive: true)
    * @param serverId - The Discord server ID
    * @param channelId - The Discord channel ID (optional)
-   * @returns Array of matching bot configurations
+   * @returns Array of matching active bot configurations
    */
   async findBotsForChannel(serverId: string, channelId?: string): Promise<Bot[]> {
     const bots: Bot[] = [];
@@ -303,6 +360,7 @@ export class BotService {
       const channelMatch = await this.botCollection
         .where('discordServerId', '==', serverId)
         .where('discordChannelId', '==', channelId)
+        .where('isActive', '==', true) // Only get active bots
         .get();
 
       for (const doc of channelMatch.docs) {
@@ -320,6 +378,7 @@ export class BotService {
     // and filter for those without channelId
     const serverMatches = await this.botCollection
       .where('discordServerId', '==', serverId)
+      .where('isActive', '==', true) // Only get active bots
       .get();
 
     // Find bots without a channelId (server-wide bots)
